@@ -17,7 +17,7 @@ class SerializableBase(metaclass=ABCMeta):
     @classmethod
     def type(cls):
         """object: the type of the object"""
-        raise cls.__class__
+        return cls.__class__
 
     @staticmethod
     @abstractmethod
