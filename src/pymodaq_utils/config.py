@@ -13,6 +13,7 @@ import logging
 if TYPE_CHECKING:
     from pyqtgraph import Parameter
 
+from pymodaq_utils.env_utils import guess_virtual_environment, hash_pymodaq_packages_version
 
 try:
     USER = environ['USERNAME'] if sys.platform == 'win32' else environ['USER']
@@ -25,6 +26,8 @@ CONFIG_BASE_PATH = Path(environ['PROGRAMDATA']) if sys.platform == 'win32' else 
 
 KeyType = TypeVar('KeyType')
 
+
+PYMODAQ_USER_FOLDER_NAME = f'.pymodaq_{ guess_virtual_environment() }_{ hash_pymodaq_packages_version() }'
 
 def deep_update(mapping: Dict[KeyType, Any], *updating_mappings: Dict[KeyType, Any]) -> Dict[KeyType, Any]:
     """ Make sure a dictionary is updated using another dict in any nested level
@@ -126,11 +129,12 @@ def get_set_local_dir(user=False) -> Path:
     -------
     Path: the local path
     """
+
     if user:
-        local_path = get_set_path(Path.home(), '.pymodaq')
+        local_dir = get_set_path(Path.home(), PYMODAQ_USER_FOLDER_NAME)
     else:
-        local_path = get_set_path(CONFIG_BASE_PATH, '.pymodaq')
-    return local_path
+        local_dir = get_set_path(CONFIG_BASE_PATH, '.pymodaq')
+    return local_dir
 
 
 def get_config_file(config_file_name: str, user=False):

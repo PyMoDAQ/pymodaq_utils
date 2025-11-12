@@ -10,32 +10,14 @@ from datetime import datetime
 from pymodaq_utils import config as configmod
 from pymodaq_utils.config import get_set_local_dir
 from pymodaq_utils.logger import set_logger, get_module_name
-
+from pymodaq_utils.env_utils import  guess_virtual_environment
 
 logger = set_logger(get_module_name(__file__))
 
 config = configmod.Config()
 
 
-def guess_virtual_environment() -> str:
-    '''
-        Try to guess the current python environment used.
 
-        Returns
-        -------
-        str: the guessed environment name or the string "unknown"
-    '''
-    def _venv_name_or_path():
-        #Try to guess from system environment
-        for var in ['VIRTUAL_ENV', 'CONDA_DEFAULT_ENV', 'PYENV_VERSION', 'TOX_ENV_NAME']:
-            value = os.environ.get(var)
-            if value:
-                return value
-        #if true, probably running in a venv
-        if sys.prefix != sys.base_prefix:
-            return sys.prefix
-        return 'unknown'
-    return Path(_venv_name_or_path()).name
 
 
 class EnvironmentBackupManager:

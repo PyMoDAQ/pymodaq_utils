@@ -1,20 +1,21 @@
 import os, sys
+import importlib
 import pytest
 
-
-from pymodaq_utils.environment import guess_virtual_environment, PythonEnvironment
+from pymodaq_utils.env_utils import guess_virtual_environment, hash_pymodaq_packages_version
+from pymodaq_utils.environment import PythonEnvironment
 
 
 POSSIBLE_VENV_VARIABLES = ['VIRTUAL_ENV', 'CONDA_DEFAULT_ENV', 'PYENV_VERSION', 'TOX_ENV_NAME']
 class TestGuessVirtualEnvironment:
 
-    @pytest.mark.parametrize("var", POSSIBLE_VENV_VARIABLES)
+    @pytest.mark.parametrize('var', POSSIBLE_VENV_VARIABLES)
     def test_from_environment_var(self, monkeypatch, var):
-        venv_name = "if_your_environment_is_called_like_that_you_should_probably_change_it"
+        venv_name = 'if_your_environment_is_called_like_that_you_should_probably_change_it'
 
         # set one of the possible environment variable to the var name value
         # and remove the others
-        monkeypatch.setenv(var, os.path.join("/home/./folder/", venv_name))
+        monkeypatch.setenv(var, os.path.join('/home/./folder/', venv_name))
         for other in  [o for o in POSSIBLE_VENV_VARIABLES if o != var]:
             monkeypatch.delenv(other, raising=False)   
         
@@ -22,11 +23,11 @@ class TestGuessVirtualEnvironment:
 
 
     def test_from_prefix(self, monkeypatch):
-        venv_name = "if_your_environment_is_called_like_that_you_should_probably_change_it"
+        venv_name = 'if_your_environment_is_called_like_that_you_should_probably_change_it'
         for var in POSSIBLE_VENV_VARIABLES:
             monkeypatch.delenv(var, raising=False)
 
-        monkeypatch.setattr(sys, "prefix", os.path.join("/home/./folder/", venv_name))
+        monkeypatch.setattr(sys, 'prefix', os.path.join('/home/./folder/', venv_name))
         assert guess_virtual_environment() == venv_name
 
 
@@ -34,7 +35,7 @@ class TestGuessVirtualEnvironment:
         for var in POSSIBLE_VENV_VARIABLES:
             monkeypatch.delenv(var, raising=False)   
         
-        monkeypatch.setattr(sys, "prefix", sys.base_prefix)
+        monkeypatch.setattr(sys, 'prefix', sys.base_prefix)
         assert guess_virtual_environment() == 'unknown'
 
 class TestPythonEnvironment:
@@ -71,4 +72,25 @@ class TestPythonEnvironment:
         e1 = PythonEnvironment.from_freeze()
         e2 = PythonEnvironment.from_freeze()
 
-        assert e1 == e2, "Two pip freeze in a row don't return the same environment. Ensure no pip install are running."
+        assert e1 == e2, 'Two pip freeze in a row don\'t return the same environment. Ensure no pip install are running.'
+
+class TestHashPymodaqPackageVersion:
+	@pytest.mark.parametrize(
+		'versions, hashed', [
+	        ({'pymodaq_utils': '1.0.0', 'pymodaq_data': '2.0.0', 'pymodaq_gui': '3.0.0', 'PyMoDAQ': '4.0.0'}, '94722337cbb21550'),
+	        ({'pymodaq_utils': '9.9.9', 'pymodaq_data': '8.8.8', 'pymodaq_gui': '7.7.7', 'PyMoDAQ': '6.6.6'}, 'eb57be0fff8e14f5')
+	    ]
+	)
+	def test_hash_pymodaq_package_version(self, monkeypatch, versions, hashed):
+		def mock_version(package):
+			return versions[package]
+
+		monkeypatch.setattr(importlib.metadata, 'version', mock_version)
+
+		assert hash_pymodaq_packages_version() == hashed
+
+	def test_hash_similar(self):
+		h1 = hash_pymodaq_packages_version()
+		h2 = hash_pymodaq_packages_version()
+
+		assert h1 == h2, 'Two hashes of PyMoDAQ package version numbers in a row return different values. Ensure no pip install are'
